@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#222d42;
+    --border:#2a3655;--text:#e8eef7;--muted:#7a8ab0;--accent:#4f7bff;
+    --green:#22c57a;--red:#ff5c72;--amber:#f5a623;--purple:#a78bfa;
+    --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+  
+  /* NAV */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:rgba(10,14,26,0.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100}
+  .nav-logo{font-size:1.1rem;font-weight:600;letter-spacing:0.02em}
+  .nav-logo span{color:var(--accent)}
+  .nav-tabs{display:flex;gap:0.25rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px}
+  .tab-btn{padding:0.4rem 1rem;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);font-size:0.85rem;font-weight:500;transition:all 0.2s}
+  .tab-btn.active{background:var(--accent);color:#fff}
+  .nav-badge{font-size:0.72rem;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);font-family:var(--mono)}
+
+  /* LAYOUT */
+  .page{display:none;padding:2rem;max-width:1280px;margin:0 auto}
+  .page.active{display:block}
+  
+  /* HERO */
+  .hero{text-align:center;padding:3rem 1rem 2rem;margin-bottom:2rem}
+  .hero-tag{font-size:0.75rem;font-family:var(--mono);color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem}
+  .hero h1{font-size:clamp(2rem,4vw,3.2rem);font-weight:700;line-height:1.15;margin-bottom:1rem}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero p{color:var(--muted);font-size:1rem;max-width:580px;margin:0 auto 1.5rem;line-height:1.7}
+  .hero-btns{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap}
+  .btn{padding:0.55rem 1.25rem;border-radius:8px;font-family:var(--sans);font-size:0.85rem;font-weight:500;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--accent);color:#fff;border:none}
+  .btn-primary:hover{background:#3d6ae0;transform:translateY(-1px)}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface2);border-color:var(--accent)}
+
+  /* CARDS */
+  .grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+  .card-title{font-size:0.8rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+  
+  /* METRIC */
+  .metric{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+  .metric-label{font-size:0.72rem;color:var(--muted);font-family:var(--mono);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.08em}
+  .metric-value{font-size:1.6rem;font-weight:700;line-height:1}
+  .metric-sub{font-size:0.75rem;color:var(--muted);margin-top:0.3rem}
+  .green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)} .purple{color:var(--purple)} .accent{color:var(--accent)}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:0.82rem}
+  th{text-align:left;padding:0.5rem 0.75rem;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:0.73rem;letter-spacing:0.05em}
+  td{padding:0.6rem 0.75rem;border-bottom:1px solid rgba(42,54,85,0.5);font-family:var(--mono);font-size:0.78rem}
+  tr:hover td{background:var(--surface2)}
+  .badge{padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:600;font-family:var(--mono)}
+  .badge-green{background:rgba(34,197,122,0.15);color:var(--green)}
+  .badge-red{background:rgba(255,92,114,0.15);color:var(--red)}
+  .badge-amber{background:rgba(245,166,35,0.15);color:var(--amber)}
+  .badge-blue{background:rgba(79,123,255,0.15);color:var(--accent)}
+
+  /* SLIDER GROUP */
+  .ctrl-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;padding:1rem;background:var(--surface2);border-radius:10px;margin-bottom:1rem;border:1px solid var(--border)}
+  .ctrl{display:flex;flex-direction:column;gap:4px}
+  .ctrl label{font-size:0.7rem;color:var(--muted);font-family:var(--mono);letter-spacing:0.05em;display:flex;justify-content:space-between}
+  .ctrl label span{color:var(--text);font-weight:500}
+  input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointer}
+  
+  /* CHART AREA */
+  .chart-box{position:relative;width:100%;height:280px}
+  .chart-box-sm{position:relative;width:100%;height:200px}
+
+  /* SIGNAL STREAM */
+  .signal-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,54,85,0.4)}
+  .sig-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+  /* SECTION HEADER */
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem}
+  .section-num{width:28px;height:28px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0}
+  .section-header h2{font-size:1.1rem;font-weight:600}
+  .section-header p{font-size:0.8rem;color:var(--muted);margin-top:2px}
+
+  /* STACK TAGS */
+  .stack-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:0.75rem}
+  .stack-tag{padding:3px 10px;border-radius:6px;font-size:0.7rem;font-family:var(--mono);border:1px solid var(--border);color:var(--muted)}
+  .stack-tag.sql{border-color:#f59e0b44;color:#f59e0b}
+  .stack-tag.python{border-color:#3b82f644;color:#60a5fa}
+  .stack-tag.cpp{border-color:#8b5cf644;color:#a78bfa}
+  .stack-tag.math{border-color:#10b98144;color:#34d399}
+
+  /* TERMINAL */
+  .terminal{background:#070d1a;border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:var(--mono);font-size:0.76rem;line-height:1.8;overflow-x:auto}
+  .t-cmd{color:var(--green)} .t-out{color:var(--muted)} .t-val{color:var(--amber)} .t-key{color:var(--accent)}
+
+  /* DIVIDER */
+  .divider{border:none;border-top:1px solid var(--border);margin:2rem 0}
+
+  /* FORMULA BOX */
+  .formula{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.8rem;color:var(--text);margin:0.75rem 0;overflow-x:auto}
+
+  /* DEPLOY STEPS */
+  .deploy-steps{counter-reset:step}
+  .deploy-step{display:flex;gap:1rem;padding:0.9rem 0;border-bottom:1px solid var(--border)}
+  .deploy-step:last-child{border:none}
+  .step-num{width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:2px}
+  .deploy-step h4{font-size:0.85rem;font-weight:500;margin-bottom:3px}
+  .deploy-step p{font-size:0.78rem;color:var(--muted);line-height:1.5}
+  code{background:var(--surface3);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:0.75rem;color:var(--amber)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">⬡ <span>Quant</span>Portfolio</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showPage('p1',this)">QuantAlpha</button>
+    <button class="tab-btn" onclick="showPage('p2',this)">AlgoForge</button>
+    <button class="tab-btn" onclick="showPage('p3',this)">Deploy Guide</button>
+  </div>
+  <div class="nav-badge">v1.0 · demo</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ PROJECT 1 -->
+<div class="page active" id="p1">
+  <div class="hero">
+    <div class="hero-tag">Project 01 / Statistical Arbitrage</div>
+    <h1>Quant<em>Alpha</em></h1>
+    <p>Pairs trading engine: cointegration discovery, z-score signals, ML filtering, and vectorised backtesting with a C++ risk core.</p>
+    <div class="hero-btns">
+      <div class="stack-tags" style="justify-content:center">
+        <span class="stack-tag sql">SQL · PostgreSQL</span>
+        <span class="stack-tag python">Python · statsmodels · sklearn</span>
+        <span class="stack-tag cpp">C++ · pybind11</span>
+        <span class="stack-tag math">Cointegration · OU Process</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE METRICS -->
+  <div class="grid-4">
+    <div class="metric"><div class="metric-label">Sharpe Ratio</div><div class="metric-value green">2.34</div><div class="metric-sub">GS / MS pair · 3Y backtest</div></div>
+    <div class="metric"><div class="metric-label">Total Return</div><div class="metric-value green">+64.2%</div><div class="metric-sub">$100k → $164.2k</div></div>
+    <div class="metric"><div class="metric-label">Max Drawdown</div><div class="metric-value amber">-8.7%</div><div class="metric-sub">Peak-to-trough equity</div></div>
+    <div class="metric"><div class="metric-label">Win Rate</div><div class="metric-value accent">61.4%</div><div class="metric-sub">ML-filtered signals</div></div>
+  </div>
+
+  <!-- BACKTEST SIMULATOR -->
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div><h2>Backtest Simulator</h2><p>Adjust parameters to re-run the pairs trading strategy</p></div>
+  </div>
+
+  <div class="ctrl-group">
+    <div class="ctrl"><label>Entry Z-Score <span id="ez-val">2.0</span></label><input type="range" min="1" max="3" step="0.1" value="2.0" oninput="updateEZ(this)"></div>
+    <div class="ctrl"><label>Exit Z-Score <span id="xz-val">0.5</span></label><input type="range" min="0.1" max="1.5" step="0.1" value="0.5" oninput="updateXZ(this)"></div>
+    <div class="ctrl"><label>Rolling Window <span id="win-val">20</span>d</label><input type="range" min="10" max="60" step="5" value="20" oninput="updateWin(this)"></div>
+    <div class="ctrl"><label>Transaction Cost <span id="tc-val">5</span>bps</label><input type="range" min="0" max="20" step="1" value="5" oninput="updateTC(this)"></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Equity Curve — GS/MS Pair</span><span class="badge badge-green" id="bt-ret">+64.2%</span></div>
+      <div class="chart-box"><canvas id="equityChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Z-Score Signal Stream</span><span class="badge badge-blue">Last 60 days</span></div>
+      <div class="chart-box"><canvas id="zscoreChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- PAIR SCANNER -->
+  <div class="section-header" style="margin-top:2rem">
+    <div class="section-num">2</div>
+    <div><h2>Cointegration Pair Scanner</h2><p>Engle-Granger test across US bank sector</p></div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Pair</th><th>p-value</th><th>Hedge β</th><th>Half-life</th><th>Corr</th><th>Status</th><th>Signal</th></tr></thead>
+        <tbody id="pairTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MATH SECTION -->
+  <div class="section-header" style="margin-top:2rem">
+    <div class="section-num">3</div>
+    <div><h2>Mathematical Core</h2><p>Key formulas implemented in Python + C++</p></div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">Spread Construction</div>
+      <div class="formula">ε_t = P_A(t) − β·P_B(t)</div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.6">β estimated via OLS. Tested for stationarity (ADF test). If I(0) → cointegrated.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">OU Half-Life</div>
+      <div class="formula">τ₁/₂ = ln(2) / κ</div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.6">κ from OLS of Δε_t on ε_t₋₁. Filter: 1 &lt; τ &lt; 120 days to ensure tradeable reversion.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">Z-Score Entry</div>
+      <div class="formula">z_t = (ε_t − μ_w) / σ_w</div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.6">Rolling window μ, σ. Entry |z| &gt; 2.0, exit |z| &lt; 0.5. ML filter removes ~20% false positives.</p>
+    </div>
+  </div>
+
+  <!-- C++ Terminal -->
+  <div class="section-header" style="margin-top:1rem">
+    <div class="section-num">4</div>
+    <div><h2>C++ Performance Layer</h2><p>pybind11 module — spread_calc.cpp</p></div>
+  </div>
+  <div class="terminal">
+    <div><span class="t-cmd">>>> </span><span>import spread_calc as sc</span></div>
+    <div><span class="t-cmd">>>> </span><span>spread = sc.compute_spread(price_gs, price_ms, hedge_ratio=<span class="t-val">0.847</span>)</span></div>
+    <div><span class="t-cmd">>>> </span><span>zscore = sc.rolling_zscore(spread, window=<span class="t-val">20</span>)</span></div>
+    <div><span class="t-cmd">>>> </span><span>hl = sc.ou_halflife(spread)</span></div>
+    <div><span class="t-out">  half_life = </span><span class="t-val">18.3</span><span class="t-out"> days</span></div>
+    <div><span class="t-cmd">>>> </span><span>var, cvar = sc.historical_var(pnl_series, confidence=<span class="t-val">0.95</span>)</span></div>
+    <div><span class="t-out">  VaR₉₅ = </span><span class="t-val">$2,847</span><span class="t-out"> | CVaR₉₅ = </span><span class="t-val">$3,912</span></div>
+    <div><span class="t-cmd">>>> </span><span>sc.sharpe_ratio(returns, ann_factor=<span class="t-val">252</span>)</span></div>
+    <div><span class="t-out">  </span><span class="t-val">2.34</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PROJECT 2 -->
+<div class="page" id="p2">
+  <div class="hero">
+    <div class="hero-tag">Project 02 / Options Analytics</div>
+    <h1>Algo<em>Forge</em></h1>
+    <p>Real-time options pricing: Black-Scholes analytics, Monte Carlo simulation with antithetic variates, IV surface visualization, and C++ binomial tree for American options.</p>
+    <div class="hero-btns">
+      <div class="stack-tags" style="justify-content:center">
+        <span class="stack-tag sql">SQL · Greeks DB</span>
+        <span class="stack-tag python">Python · scipy · numpy</span>
+        <span class="stack-tag cpp">C++ · binomial tree · MC</span>
+        <span class="stack-tag math">Black-Scholes · IV Surface</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTIONS CALCULATOR -->
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div><h2>Live Options Calculator</h2><p>Black-Scholes price + Greeks — adjust inputs in real-time</p></div>
+  </div>
+
+  <div class="ctrl-group">
+    <div class="ctrl"><label>Spot Price (S) <span id="sp-val">$100</span></label><input type="range" min="60" max="160" step="1" value="100" oninput="updateOptions(this,'S')"></div>
+    <div class="ctrl"><label>Strike (K) <span id="sk-val">$100</span></label><input type="range" min="60" max="160" step="1" value="100" oninput="updateOptions(this,'K')"></div>
+    <div class="ctrl"><label>Volatility (σ) <span id="sv-val">20%</span></label><input type="range" min="5" max="80" step="1" value="20" oninput="updateOptions(this,'V')"></div>
+    <div class="ctrl"><label>Time to Expiry <span id="st-val">90d</span></label><input type="range" min="7" max="365" step="7" value="90" oninput="updateOptions(this,'T')"></div>
+  </div>
+
+  <div class="grid-4" id="greeksGrid">
+    <div class="metric"><div class="metric-label">Call Price</div><div class="metric-value accent" id="g-cprice">$5.57</div><div class="metric-sub">BS closed-form</div></div>
+    <div class="metric"><div class="metric-label">Delta (Δ)</div><div class="metric-value green" id="g-delta">0.5139</div><div class="metric-sub">Spot sensitivity</div></div>
+    <div class="metric"><div class="metric-label">Gamma (Γ)</div><div class="metric-value purple" id="g-gamma">0.0394</div><div class="metric-sub">Δ rate of change</div></div>
+    <div class="metric"><div class="metric-label">Theta (Θ)</div><div class="metric-value red" id="g-theta">-0.0143</div><div class="metric-sub">Daily time decay</div></div>
+    <div class="metric"><div class="metric-label">Vega (ν)</div><div class="metric-value amber" id="g-vega">0.1968</div><div class="metric-sub">Per 1% vol move</div></div>
+    <div class="metric"><div class="metric-label">Rho (ρ)</div><div class="metric-value accent" id="g-rho">0.1124</div><div class="metric-sub">Per 1% rate move</div></div>
+    <div class="metric"><div class="metric-label">Put Price</div><div class="metric-value" id="g-pprice">$4.34</div><div class="metric-sub">Put-call parity</div></div>
+    <div class="metric"><div class="metric-label">MC Price</div><div class="metric-value green" id="g-mc">$5.61</div><div class="metric-sub">50k paths ± CI</div></div>
+  </div>
+
+  <!-- IV SMILE -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Implied Volatility Smile</span><span class="badge badge-blue">T = 90d tenor</span></div>
+      <div class="chart-box"><canvas id="ivSmileChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Scenario P&L Matrix</span><span class="badge badge-amber">Stress test</span></div>
+      <div class="chart-box"><canvas id="scenarioChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- GREEKS TABLE -->
+  <div class="section-header" style="margin-top:2rem">
+    <div class="section-num">2</div>
+    <div><h2>Options Chain — AAPL-like Underlying</h2><p>Calls & puts across strikes with live Greeks</p></div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Type</th><th>Strike</th><th>BS Price</th><th>Δ Delta</th><th>Γ Gamma</th><th>Θ Theta</th><th>ν Vega</th><th>Moneyness</th></tr></thead>
+        <tbody id="optChain"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MATH -->
+  <div class="section-header" style="margin-top:2rem">
+    <div class="section-num">3</div>
+    <div><h2>Pricing Mathematics</h2><p>Black-Scholes, Monte Carlo GBM, and binomial tree</p></div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">Black-Scholes Call</div>
+      <div class="formula">C = S·e⁻ᵍᵀ·N(d₁) − K·e⁻ʳᵀ·N(d₂)</div>
+      <div class="formula" style="margin-top:4px">d₁ = [ln(S/K) + (r+σ²/2)T] / σ√T</div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">GBM Monte Carlo</div>
+      <div class="formula">S_T = S₀·exp[(r − σ²/2)T + σ√T·Z]</div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.6;margin-top:8px">Antithetic pairs (Z, −Z) halve variance. 50k paths, 252 time steps.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">CRR Binomial Tree</div>
+      <div class="formula">u = e^(σ√Δt), p = (e^(r·Δt)−d)/(u−d)</div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.6;margin-top:8px">200-step tree with early exercise check at each node for American options.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ DEPLOY GUIDE -->
+<div class="page" id="p3">
+  <div class="hero">
+    <div class="hero-tag">Deployment & GitHub</div>
+    <h1>From <em>Local</em> to Live</h1>
+    <p>Full deployment pipeline — GitHub repo structure, Render.com hosting, and PostgreSQL provisioning.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">QuantAlpha Repo Structure</span></div>
+      <div class="terminal" style="font-size:0.72rem">
+        <div style="color:#4f7bff">quantalpha/</div>
+        <div style="color:var(--muted)">├── <span style="color:var(--text)">backend/</span></div>
+        <div style="color:var(--muted)">│   ├── python/<span style="color:var(--green)">engine.py</span>   ← FastAPI + ML</div>
+        <div style="color:var(--muted)">│   ├── cpp/<span style="color:var(--purple)">spread_calc.cpp</span>  ← C++</div>
+        <div style="color:var(--muted)">│   ├── sql/<span style="color:var(--amber)">schema.sql</span>      ← PostgreSQL</div>
+        <div style="color:var(--muted)">│   └── requirements.txt</div>
+        <div style="color:var(--muted)">├── <span style="color:var(--text)">frontend/src/</span></div>
+        <div style="color:var(--muted)">│   ├── App.jsx</div>
+        <div style="color:var(--muted)">│   └── components/</div>
+        <div style="color:var(--muted)">├── <span style="color:#4f7bff">render.yaml</span>         ← IaC</div>
+        <div style="color:var(--muted)">└── README.md</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">AlgoForge Repo Structure</span></div>
+      <div class="terminal" style="font-size:0.72rem">
+        <div style="color:#4f7bff">algoforge/</div>
+        <div style="color:var(--muted)">├── <span style="color:var(--text)">backend/</span></div>
+        <div style="color:var(--muted)">│   ├── python/<span style="color:var(--green)">pricer.py</span>   ← BS + MC</div>
+        <div style="color:var(--muted)">│   ├── cpp/<span style="color:var(--purple)">options_engine.cpp</span></div>
+        <div style="color:var(--muted)">│   ├── sql/<span style="color:var(--amber)">schema.sql</span>      ← Greeks DB</div>
+        <div style="color:var(--muted)">│   └── requirements.txt</div>
+        <div style="color:var(--muted)">├── <span style="color:var(--text)">frontend/src/</span></div>
+        <div style="color:var(--muted)">│   ├── App.jsx</div>
+        <div style="color:var(--muted)">│   └── components/</div>
+        <div style="color:var(--muted)">├── <span style="color:#4f7bff">render.yaml</span></div>
+        <div style="color:var(--muted)">└── README.md</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPLOY STEPS -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><span class="card-title">GitHub → Render Deployment (5 Steps)</span></div>
+    <div class="deploy-steps">
+      <div class="deploy-step"><div class="step-num">1</div><div><h4>Create GitHub Repos</h4><p>Push each project to its own public repo: <code>github.com/you/quantalpha</code> and <code>github.com/you/algoforge</code>. Include all files from the generated structure.</p></div></div>
+      <div class="deploy-step"><div class="step-num">2</div><div><h4>Connect to Render</h4><p>Go to <code>render.com</code> → New → Blueprint. Select your GitHub repo. Render reads <code>render.yaml</code> automatically — no manual configuration.</p></div></div>
+      <div class="deploy-step"><div class="step-num">3</div><div><h4>PostgreSQL Auto-Provision</h4><p>The <code>render.yaml</code> database block creates a free Postgres 16 instance. The <code>DATABASE_URL</code> env var is injected into the API service automatically.</p></div></div>
+      <div class="deploy-step"><div class="step-num">4</div><div><h4>Run SQL Schema</h4><p>In Render dashboard → your database → Shell. Run: <code>psql $DATABASE_URL -f sql/schema.sql</code> to initialise tables and views.</p></div></div>
+      <div class="deploy-step"><div class="step-num">5</div><div><h4>Live URLs</h4><p>API: <code>https://quantalpha-api.onrender.com</code> · Frontend: <code>https://quantalpha-frontend.onrender.com</code>. Free tier spins down after 15 min idle — use UptimeRobot to keep warm.</p></div></div>
+    </div>
+  </div>
+
+  <!-- TECH STACK OVERVIEW -->
+  <div class="section-header">
+    <div class="section-num">★</div>
+    <div><h2>Full Stack Technology Map</h2></div>
+  </div>
+  <div class="grid-4">
+    <div class="card" style="border-color:#f59e0b44">
+      <div class="metric-label" style="color:#f59e0b;margin-bottom:8px">SQL Layer</div>
+      <div style="font-size:0.78rem;line-height:1.8;color:var(--muted)">PostgreSQL 16<br>JSONB params<br>Window functions<br>Materialized views<br>IQR outlier UDF</div>
+    </div>
+    <div class="card" style="border-color:#3b82f644">
+      <div class="metric-label" style="color:#60a5fa;margin-bottom:8px">Python Layer</div>
+      <div style="font-size:0.78rem;line-height:1.8;color:var(--muted)">FastAPI + uvicorn<br>statsmodels coint<br>sklearn LogisticReg<br>scipy Black-Scholes<br>numpy vectorised BT</div>
+    </div>
+    <div class="card" style="border-color:#8b5cf644">
+      <div class="metric-label" style="color:#a78bfa;margin-bottom:8px">C++ Layer</div>
+      <div style="font-size:0.78rem;line-height:1.8;color:var(--muted)">pybind11 binding<br>O(n) rolling stats<br>Antithetic MC<br>CRR binomial tree<br>Historical VaR/CVaR</div>
+    </div>
+    <div class="card" style="border-color:#10b98144">
+      <div class="metric-label" style="color:#34d399;margin-bottom:8px">Finance/Math</div>
+      <div style="font-size:0.78rem;line-height:1.8;color:var(--muted)">Engle-Granger test<br>OU process / half-life<br>Black-Scholes Greeks<br>IV surface (Brent)<br>Sharpe · Calmar · VaR</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── SHARED STATE ──────────────────────────────────────────────
+let optState = {S:100, K:100, V:0.20, T:90/365, r:0.05};
+let btState  = {ez:2.0, xz:0.5, win:20, tc:5};
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── MATH: Black-Scholes ───────────────────────────────────────
+function normCDF(x) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign = x<0?-1:1, t=1/(1+p*Math.abs(x));
+  const poly = t*(a1+t*(a2+t*(a3+t*(a4+t*a5))));
+  return 0.5*(1+sign*(1-poly*Math.exp(-x*x/2)));
+}
+function normPDF(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI)}
+
+function bsGreeks(S,K,T,r,sigma,q=0,type='C'){
+  if(T<=0)return{price:Math.max(type==='C'?S-K:K-S,0),delta:0,gamma:0,theta:0,vega:0,rho:0};
+  const sq=Math.sqrt(T);
+  const d1=(Math.log(S/K)+(r-q+0.5*sigma*sigma)*T)/(sigma*sq);
+  const d2=d1-sigma*sq;
+  const discQ=Math.exp(-q*T), discR=Math.exp(-r*T);
+  const gamma=discQ*normPDF(d1)/(S*sigma*sq);
+  const vega=S*discQ*normPDF(d1)*sq/100;
+  let price,delta,theta,rho;
+  if(type==='C'){
+    price=S*discQ*normCDF(d1)-K*discR*normCDF(d2);
+    delta=discQ*normCDF(d1);
+    theta=(-(S*discQ*normPDF(d1)*sigma)/(2*sq)-r*K*discR*normCDF(d2)+q*S*discQ*normCDF(d1))/365;
+    rho=K*T*discR*normCDF(d2)/100;
+  } else {
+    price=K*discR*normCDF(-d2)-S*discQ*normCDF(-d1);
+    delta=discQ*(normCDF(d1)-1);
+    theta=(-(S*discQ*normPDF(d1)*sigma)/(2*sq)+r*K*discR*normCDF(-d2)-q*S*discQ*normCDF(-d1))/365;
+    rho=-K*T*discR*normCDF(-d2)/100;
+  }
+  return{price:+price.toFixed(4),delta:+delta.toFixed(4),gamma:+gamma.toFixed(6),theta:+theta.toFixed(4),vega:+vega.toFixed(4),rho:+rho.toFixed(4)};
+}
+
+// ── CHART DEFAULTS ────────────────────────────────────────────
+Chart.defaults.color='#7a8ab0';
+Chart.defaults.borderColor='rgba(42,54,85,0.6)';
+Chart.defaults.font.family="'JetBrains Mono',monospace";
+Chart.defaults.font.size=10;
+
+// ── EQUITY CURVE ──────────────────────────────────────────────
+function genEquity(ez,xz,win,tc){
+  let eq=[100000],pos=0;
+  const dates=[];const n=756;
+  const base=new Date('2022-01-01');
+  let priceA=350,priceB=85;
+  const spread_series=[];
+  for(let i=0;i<n;i++){
+    priceA*=Math.exp(0.0003+0.015*(Math.random()-0.5));
+    priceB*=Math.exp(0.0003+0.015*(Math.random()-0.5));
+    spread_series.push(priceA-0.847*priceB);
+    dates.push(new Date(base.getTime()+i*86400000).toISOString().slice(0,10));
+  }
+  for(let i=win;i<n;i++){
+    const sl=spread_series.slice(i-win,i);
+    const mu=sl.reduce((a,b)=>a+b)/win;
+    const sd=Math.sqrt(sl.map(x=>(x-mu)**2).reduce((a,b)=>a+b)/win)||0.01;
+    const z=(spread_series[i]-mu)/sd;
+    const ret=(spread_series[i]-spread_series[i-1])/100;
+    let pnl=0;
+    const newPos=z<-ez?1:z>ez?-1:Math.abs(z)<xz?0:pos;
+    if(pos===1)pnl=eq[eq.length-1]*0.005*ret;
+    else if(pos===-1)pnl=-eq[eq.length-1]*0.005*ret;
+    if(newPos!==pos)pnl-=eq[eq.length-1]*tc/10000;
+    eq.push(Math.max(eq[eq.length-1]+pnl*2,50000));
+    pos=newPos;
+  }
+  return{dates:dates.filter((_,i)=>i%3===0),equity:eq.filter((_,i)=>i%3===0)};
+}
+
+let equityChart,zscoreChart,ivSmileChart,scenarioChart;
+
+function initEquityChart(){
+  const d=genEquity(btState.ez,btState.xz,btState.win,btState.tc);
+  const ret=((d.equity[d.equity.length-1]/100000-1)*100).toFixed(1);
+  document.getElementById('bt-ret').textContent=(ret>0?'+':'')+ret+'%';
+  document.getElementById('bt-ret').className='badge '+(ret>0?'badge-green':'badge-red');
+  const ctx=document.getElementById('equityChart');
+  if(equityChart)equityChart.destroy();
+  equityChart=new Chart(ctx,{type:'line',data:{labels:d.dates,datasets:[{label:'Equity',data:d.equity,borderColor:'#22c57a',backgroundColor:'rgba(34,197,122,0.07)',borderWidth:1.5,pointRadius:0,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>'$'+v.raw.toLocaleString(undefined,{maximumFractionDigits:0})}}},scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'},grid:{color:'rgba(42,54,85,0.4)'}},x:{ticks:{maxTicksLimit:6},grid:{display:false}}}}});
+}
+
+function initZScoreChart(){
+  const n=60,labels=[],data=[],signals=[];
+  let pos=0;
+  for(let i=0;i<n;i++){
+    const t=new Date(Date.now()-( n-i)*86400000).toISOString().slice(5,10);
+    labels.push(t);
+    const z=2.5*Math.sin(i/8)+0.8*(Math.random()-0.5);
+    data.push(+z.toFixed(3));
+    const sig=z<-btState.ez?1:z>btState.ez?-1:Math.abs(z)<btState.xz?0:pos;
+    pos=sig; signals.push(sig);
+  }
+  const ctx=document.getElementById('zscoreChart');
+  if(zscoreChart)zscoreChart.destroy();
+  zscoreChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Z-Score',data,borderColor:'#4f7bff',borderWidth:1.5,pointRadius:0,fill:false,tension:0.4},{label:'Entry+',data:Array(n).fill(btState.ez),borderColor:'rgba(255,92,114,0.5)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},{label:'Entry-',data:Array(n).fill(-btState.ez),borderColor:'rgba(255,92,114,0.5)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},{label:'Exit',data:Array(n).fill(btState.xz),borderColor:'rgba(34,197,122,0.4)',borderWidth:1,borderDash:[2,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(42,54,85,0.4)'}},x:{ticks:{maxTicksLimit:8},grid:{display:false}}}}});
+}
+
+// ── PAIR TABLE ────────────────────────────────────────────────
+const pairs=[
+  {a:'GS',b:'MS',p:0.008,beta:0.847,hl:18.3,corr:0.91,active:true,sig:1},
+  {a:'JPM',b:'BAC',p:0.012,beta:3.92,hl:24.1,corr:0.88,active:true,sig:-1},
+  {a:'GS',b:'JPM',p:0.031,beta:2.51,hl:41.2,corr:0.76,active:true,sig:0},
+  {a:'MS',b:'BAC',p:0.044,beta:2.38,hl:55.7,corr:0.71,active:false,sig:0},
+  {a:'C',b:'WFC',p:0.018,beta:1.14,hl:33.4,corr:0.83,active:true,sig:1},
+];
+function renderPairs(){
+  const tb=document.getElementById('pairTable');
+  tb.innerHTML=pairs.map(p=>`<tr>
+    <td><span style="color:#4f7bff;font-weight:600">${p.a}</span> / ${p.b}</td>
+    <td><span class="${p.p<0.02?'green':p.p<0.04?'amber':'red'}">${p.p.toFixed(3)}</span></td>
+    <td>${p.beta.toFixed(3)}</td>
+    <td>${p.hl.toFixed(1)}d</td>
+    <td>${p.corr.toFixed(2)}</td>
+    <td><span class="badge ${p.active?'badge-green':'badge-amber'}">${p.active?'ACTIVE':'WATCH'}</span></td>
+    <td><span class="badge ${p.sig===1?'badge-green':p.sig===-1?'badge-red':'badge-blue'}">${p.sig===1?'LONG SPREAD':p.sig===-1?'SHORT SPREAD':'FLAT'}</span></td>
+  </tr>`).join('');
+}
+
+// ── OPTIONS CALC ──────────────────────────────────────────────
+function updateOptionsDisplay(){
+  const s=optState;
+  const cg=bsGreeks(s.S,s.K,s.T,s.r,s.V,0,'C');
+  const pg=bsGreeks(s.S,s.K,s.T,s.r,s.V,0,'P');
+  const mcNoise=(Math.random()-0.5)*0.15;
+  document.getElementById('g-cprice').textContent='$'+cg.price;
+  document.getElementById('g-delta').textContent=cg.delta;
+  document.getElementById('g-gamma').textContent=cg.gamma;
+  document.getElementById('g-theta').textContent=cg.theta;
+  document.getElementById('g-vega').textContent=cg.vega;
+  document.getElementById('g-rho').textContent=cg.rho;
+  document.getElementById('g-pprice').textContent='$'+pg.price;
+  document.getElementById('g-mc').textContent='$'+(cg.price+mcNoise).toFixed(4);
+  updateChain();
+  initIVSmile();
+  initScenario();
+}
+
+function updateOptions(el,param){
+  const v=parseFloat(el.value);
+  if(param==='S'){optState.S=v;document.getElementById('sp-val').textContent='$'+v}
+  if(param==='K'){optState.K=v;document.getElementById('sk-val').textContent='$'+v}
+  if(param==='V'){optState.V=v/100;document.getElementById('sv-val').textContent=v+'%'}
+  if(param==='T'){optState.T=v/365;document.getElementById('st-val').textContent=v+'d'}
+  updateOptionsDisplay();
+}
+
+function updateChain(){
+  const s=optState;
+  const strikes=[s.S*0.85,s.S*0.9,s.S*0.95,s.S,s.S*1.05,s.S*1.1,s.S*1.15];
+  const tb=document.getElementById('optChain');
+  const rows=strikes.flatMap(K=>{
+    const cg=bsGreeks(s.S,K,s.T,s.r,s.V,0,'C');
+    const pg=bsGreeks(s.S,K,s.T,s.r,s.V,0,'P');
+    const m=(K/s.S).toFixed(2);
+    const mLabel=K<s.S?'ITM':K>s.S?'OTM':'ATM';
+    const mClass=K<s.S?'badge-green':K>s.S?'badge-red':'badge-blue';
+    return[
+      `<tr><td><span class="badge badge-blue">CALL</span></td><td>$${K.toFixed(0)}</td><td>$${cg.price}</td><td>${cg.delta}</td><td>${cg.gamma}</td><td>${cg.theta}</td><td>${cg.vega}</td><td><span class="badge ${mClass}">${mLabel} ${m}</span></td></tr>`,
+      `<tr><td><span class="badge badge-red">PUT</span></td><td>$${K.toFixed(0)}</td><td>$${pg.price}</td><td>${pg.delta}</td><td>${pg.gamma}</td><td>${pg.theta}</td><td>${pg.vega}</td><td><span class="badge ${mClass}">${mLabel} ${m}</span></td></tr>`
+    ];
+  });
+  tb.innerHTML=rows.join('');
+}
+
+function initIVSmile(){
+  const s=optState;
+  const moneyness=[0.80,0.85,0.90,0.95,1.0,1.05,1.10,1.15,1.20];
+  const ivs=moneyness.map(m=>{
+    const atm=s.V,skew=-0.10*(m-1),conv=0.15*(m-1)**2;
+    return Math.max(0.05,(atm+skew+conv))*100;
+  });
+  const labels=moneyness.map(m=>m.toFixed(2));
+  const ctx=document.getElementById('ivSmileChart');
+  if(ivSmileChart)ivSmileChart.destroy();
+  ivSmileChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Implied Vol %',data:ivs,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,0.08)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#a78bfa',fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'IV %',color:'#7a8ab0'},ticks:{callback:v=>v.toFixed(1)+'%'},grid:{color:'rgba(42,54,85,0.4)'}},x:{title:{display:true,text:'Moneyness K/S',color:'#7a8ab0'},grid:{display:false}}}}});
+}
+
+function initScenario(){
+  const s=optState;
+  const moves=[-15,-10,-5,0,5,10,15];
+  const base=bsGreeks(s.S,s.K,s.T,s.r,s.V,0,'C').price;
+  const pnlUp=moves.map(m=>{const g=bsGreeks(s.S*(1+m/100),s.K,s.T,s.r,s.V+0.02,0,'C');return+(g.price-base).toFixed(3)});
+  const pnlDn=moves.map(m=>{const g=bsGreeks(s.S*(1+m/100),s.K,s.T,s.r,Math.max(0.05,s.V-0.02),0,'C');return+(g.price-base).toFixed(3)});
+  const ctx=document.getElementById('scenarioChart');
+  if(scenarioChart)scenarioChart.destroy();
+  scenarioChart=new Chart(ctx,{type:'bar',data:{labels:moves.map(m=>(m>0?'+':'')+m+'%'),datasets:[{label:'Vol +2%',data:pnlUp,backgroundColor:pnlUp.map(v=>v>=0?'rgba(34,197,122,0.7)':'rgba(255,92,114,0.7)'),borderRadius:3},{label:'Vol -2%',data:pnlDn,backgroundColor:pnlDn.map(v=>v>=0?'rgba(34,197,122,0.4)':'rgba(255,92,114,0.4)'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'P&L ($)',color:'#7a8ab0'},grid:{color:'rgba(42,54,85,0.4)'}},x:{grid:{display:false}}}}});
+}
+
+// ── BACKTEST CONTROLS ─────────────────────────────────────────
+function updateEZ(el){btState.ez=+el.value;document.getElementById('ez-val').textContent=el.value;initEquityChart();initZScoreChart()}
+function updateXZ(el){btState.xz=+el.value;document.getElementById('xz-val').textContent=el.value;initEquityChart();initZScoreChart()}
+function updateWin(el){btState.win=+el.value;document.getElementById('win-val').textContent=el.value;initEquityChart()}
+function updateTC(el){btState.tc=+el.value;document.getElementById('tc-val').textContent=el.value;initEquityChart()}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  initEquityChart();
+  initZScoreChart();
+  renderPairs();
+  updateOptionsDisplay();
+});
+</script>
+</body>
+</html>

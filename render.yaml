@@ -1,0 +1,49 @@
+services:
+  # --- QuantAlpha API ---
+  - type: web
+    name: quantalpha-api
+    runtime: python
+    rootDir: backend/quantalpha
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn python.engine:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quantalpha-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+  # --- AlgoForge API ---
+  - type: web
+    name: algoforge-api
+    runtime: python
+    rootDir: backend/algoforge
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn python.pricer:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: algoforge-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+  # --- Unified Portfolio Frontend ---
+  - type: web
+    name: quant-portfolio-dashboard
+    runtime: static
+    rootDir: frontend
+    buildCommand: "" # No build needed for a single HTML file
+    staticPublishPath: .
+
+databases:
+  - name: quantalpha-db
+    plan: free
+    databaseName: quantalpha
+    user: quantalpha
+
+  - name: algoforge-db
+    plan: free
+    databaseName: algoforge
+    user: algoforge
