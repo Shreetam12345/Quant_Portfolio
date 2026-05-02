@@ -99,40 +99,6 @@ cd backend/cpp
 g++ -O2 -shared -fPIC $(python3-config --includes --ldflags) \
     -I$(python3 -c "import pybind11; print(pybind11.get_include())") \
     options_engine.cpp -o options_engine.so
-```
-
----
-
-## Local Setup
-
-```bash
-git clone https://github.com/YOUR_USERNAME/algoforge.git
-cd algoforge
-
-# Backend
-cd backend
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-uvicorn python.pricer:app --reload --port 8001
-
-# Frontend
-cd ../frontend
-npm install && npm run dev
-
-# Database
-psql $DATABASE_URL -f sql/schema.sql
-## API Endpoints
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/greeks` | Black-Scholes price + Greeks |
-| GET | `/api/monte-carlo` | MC pricing with CI |
-| GET | `/api/iv-surface` | Full IV surface data |
-| GET | `/api/iv-smile` | IV smile for one tenor |
-| GET | `/api/scenario` | Stress-test P&L matrix |
-| GET | `/api/health` | Health check |
-
-```
 
 # QuantAlpha — Statistical Arbitrage Platform
 
@@ -237,35 +203,3 @@ cd backend/cpp
 g++ -O2 -shared -fPIC $(python3-config --includes --ldflags) \
     -I$(python3 -c "import pybind11; print(pybind11.get_include())") \
     spread_calc.cpp -o spread_calc.so
-```
-
----
-
-## Local Setup
-
-```bash
-# 1. Clone
-git clone https://github.com/YOUR_USERNAME/quantalpha.git
-cd quantalpha
-
-# 2. Python backend
-cd backend
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-uvicorn python.engine:app --reload --port 8000
-
-# 3. Frontend
-cd ../frontend
-npm install && npm run dev
-
-# 4. Database (optional)
-psql $DATABASE_URL -f sql/schema.sql
-
-## API Endpoints
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/pairs` | List cointegrated pairs |
-| GET | `/api/backtest/{sym_a}/{sym_b}` | Run backtest, returns equity curve |
-| GET | `/api/signals/{sym_a}/{sym_b}` | Last 60 z-score signals |
-| GET | `/api/health` | Health check |
